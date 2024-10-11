@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now()) @db.DateTime(0)
+  updatedAt DateTime @default(now()) @updatedAt @db.DateTime(0)
+  Posts     Posts[]
+}
+
+model Posts {
+  id           String   @id @default(uuid())
+  title        String   @unique
+  content      String?   @db.LongText
+  slug         String   @unique
+  thumbnailUrl String?
+  status       Int
+  categoryId   String
+  publishedAt  DateTime @default(now()) @db.DateTime(0)
+  createdAt    DateTime @default(now()) @db.DateTime(0)
+  updatedAt    DateTime @default(now()) @updatedAt @db.DateTime(0)
+  category     Category @relation(fields: [categoryId], references: [id])
+
+  @@index([categoryId], map: "Posts_categoryId_fkey")
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String
+  imageUrl    String
+  buyLink     String
+  createdAt   DateTime @default(now()) @db.DateTime(0)
+  updatedAt   DateTime @default(now()) @updatedAt @db.DateTime(0)
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String?  @unique
+  name      String?  @unique
+  username  String?  @unique
+  password  String
+  createdAt DateTime @default(now()) @db.DateTime(0)
+  updatedAt DateTime @default(now()) @updatedAt @db.DateTime(0)
+}

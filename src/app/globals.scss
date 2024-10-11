@@ -1,0 +1,82 @@
+@tailwind base;
+// @tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+  --ipad-screen: 924px;
+  --mobile-screen: 653px;
+  --color-primary: #0137b8;
+  --color-secondary: #e32935;
+  --color-accent-secondary: #ffd4d1;
+  --color-accent-primary: #a3d4ff;
+}
+
+@layer utilities {
+  ol,
+  ul,
+  menu {
+    list-style: auto;
+  }
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  // Hide number input spin button
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  /* Menghilangkan spin button untuk input[type=number] di Firefox */
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+}
+
+* {
+  @extend .no-scrollbar;
+}
+
+body {
+  & main {
+    position: relative;
+    z-index: 1;
+    max-height: 100dvh;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    background-size: cover;
+    // & > .accent {
+    //   border-radius: 50%;
+    //   background: linear-gradient(
+    //     0deg,
+    //     var(--color-primary) 50%,
+    //     var(--color-secondary) 50%
+    //   );
+    //   content: "";
+    //   height: 0px;
+    //   position: absolute;
+    //   right: -50%;
+    //   top: 50%;
+    //   width: 400px;
+    //   z-index: -1;
+    //   height: 400px;
+    //   filter: blur(100px);
+    //   transform: translate(0%, -50%);
+    // }
+
+    div[data-overlay-container] {
+      max-height: 100dvh;
+      overflow-y: scroll;
+      overflow-x: hidden;
+    }
+  }
+}
