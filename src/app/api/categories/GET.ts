@@ -27,7 +27,7 @@ export async function GET(request: Request) {
 
     // Set sorting options
     const sortBy = parsedParams.sortBy || "createdAt"; // Default to sorting by createdAt
-    const sortOrder = parsedParams.sortOrder || "asc"; // Default to ascending order
+    const sortOrder = parsedParams.sortOrder || "desc"; // Default to ascending order
 
     // Construct query for Prisma
     const stores = await prisma.category.findMany({
