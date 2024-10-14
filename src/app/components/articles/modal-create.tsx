@@ -1,4 +1,5 @@
 import { useGet, usePost, usePostFile, usePut } from "@/app/lib/fetcher";
+import { useArticleStore } from "@/app/stores/article";
 import { Article } from "@/app/types/article";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -11,8 +12,6 @@ import {
   ModalContent,
   ModalFooter,
   ModalHeader,
-  Select,
-  SelectItem,
 } from "@nextui-org/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
@@ -22,12 +21,9 @@ import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import ThumbnailDropzone from "../thumbnail-dropzone";
-import { useArticleStore } from "@/app/stores/article";
 
-// Dynamic import for react-quill to avoid SSR issues
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
-// Define validation schema using Zod
 const postSchema = z.object({
   title: z.string().min(3, {
     message: "Title is required and should be at least 3 characters",
@@ -63,7 +59,7 @@ const ModalCreate: React.FC<ModalCreateProps> = ({ isOpen, onOpenChange }) => {
 
   const updatePostMutation = useMutation({
     mutationFn: (postData: Article) =>
-      usePut(`api/articles?id=${selectedArticle?.id}`, { arg: postData }), // PUT request for updating article
+      usePut(`api/articles?id=${selectedArticle?.id}`, { arg: postData }),
   });
 
   const uploadFileMutation = useMutation({
@@ -88,7 +84,13 @@ const ModalCreate: React.FC<ModalCreateProps> = ({ isOpen, onOpenChange }) => {
     reset,
     formState: { errors },
     setValue,
-  } = useForm({
+  } = useForm<{
+    title: string;
+    slug: string;
+    content: string;
+    status: string;
+    categoryId: string;
+  }>({
     resolver: zodResolver(postSchema),
   });
 
@@ -113,8 +115,6 @@ const ModalCreate: React.FC<ModalCreateProps> = ({ isOpen, onOpenChange }) => {
       return;
     }
 
-    console.log("Data: ", data);
-
     try {
       let uploadResponse = null;
       if (file) {
@@ -136,7 +136,6 @@ const ModalCreate: React.FC<ModalCreateProps> = ({ isOpen, onOpenChange }) => {
         updatedAt: new Date().toISOString(),
       };
       if (selectedArticle?.id) {
-        // Update logic
         const updateResponse = await updatePostMutation.mutateAsync({
           ...postData,
           id: selectedArticle.id,
@@ -180,7 +179,6 @@ const ModalCreate: React.FC<ModalCreateProps> = ({ isOpen, onOpenChange }) => {
 
   useEffect(() => {
     if (selectedArticle) {
-      console.log("Selected Article: ", selectedArticle);
       setValue("title", selectedArticle.title);
       setValue("slug", selectedArticle.slug);
       setValue("content", selectedArticle.content);
@@ -279,6 +277,9 @@ const ModalCreate: React.FC<ModalCreateProps> = ({ isOpen, onOpenChange }) => {
                     defaultItems={categories?.data || []}
                     isInvalid={!!errors.categoryId}
                     errorMessage={errors.categoryId?.message?.toString()}
+                    listboxProps={{
+                      emptyContent: `No categories found`,
+                    }}
                   >
                     {(item: { id: string; name: string }) => (
                       <AutocompleteItem key={item.id}>

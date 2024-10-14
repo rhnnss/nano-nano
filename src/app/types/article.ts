@@ -1,8 +1,8 @@
 export interface Category {
-  id: string;
+  id?: string;
   name: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Article {
