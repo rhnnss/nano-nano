@@ -3,8 +3,9 @@ export interface Banner {
   title: string;
   description: string;
   imageUrl: string;
-  ctaUrl: string;
+  ctaUrl?: string;
   isActive: number | boolean;
+  displayOrder?: number | null;
   createdAt?: string;
   updatedAt?: string;
 }

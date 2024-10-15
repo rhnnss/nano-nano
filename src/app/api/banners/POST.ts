@@ -63,6 +63,8 @@ export async function POST(request: Request) {
     const bannerData = {
       ...data,
       isActive: data.isActive ? 1 : 0,
+      ctaUrl: data.ctaUrl || "",
+      displayOrder: data.displayOrder || 0,
     };
 
     // Create the new banner using Prisma

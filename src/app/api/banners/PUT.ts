@@ -1,10 +1,10 @@
 import prisma from "@/app/lib/db";
-import { Product } from "@/app/types/product";
+import { Banner } from "@/app/types/banner";
 import { NextResponse } from "next/server";
 
 export async function PUT(request: Request) {
   try {
-    const data: Product = await request.json();
+    const data: Banner = await request.json();
 
     const { id } = data;
 
@@ -13,33 +13,32 @@ export async function PUT(request: Request) {
         {
           success: false,
           status: 400,
-          message: "Product ID is required",
+          message: "Banner ID is required",
         },
         { status: 400 },
       );
     }
 
     const missingFields = [];
-    if (!data.name)
+    if (!data.title)
       missingFields.push({
-        field: "name",
-        message: "Please provide the product name.",
+        field: "title",
+        message: "Please provide the banner title.",
       });
     if (!data.description)
       missingFields.push({
         field: "description",
-        message: "Please include a description for the product.",
+        message: "Please include a description for the banner.",
       });
     if (!data.imageUrl)
       missingFields.push({
         field: "imageUrl",
-        message: "An image URL is required to display the product.",
+        message: "An image URL is required to display the banner.",
       });
-    if (!data.buyLink)
+    if (!data.ctaUrl)
       missingFields.push({
-        field: "buyLink",
-        message:
-          "Please provide a buy link where customers can purchase the product.",
+        field: "ctaUrl",
+        message: "Please provide a call-to-action URL for the banner.",
       });
 
     if (missingFields.length > 0) {
@@ -54,21 +53,25 @@ export async function PUT(request: Request) {
       );
     }
 
-    const updatedProduct = await prisma.product.update({
+    const bannerData = {
+      ...data,
+      isActive: data.isActive ? 1 : 0,
+      ctaUrl: data.ctaUrl || "",
+      displayOrder: data.displayOrder,
+      updatedAt: new Date(),
+    };
+
+    const updatedBanner = await prisma.banner.update({
       where: { id },
-      data: {
-        ...data,
-        isActive: data.isActive ? 1 : 0,
-        updatedAt: new Date(),
-      },
+      data: bannerData,
     });
 
     return NextResponse.json(
       {
         success: true,
         status: 200,
-        message: "Product updated successfully",
-        data: updatedProduct,
+        message: "Banner updated successfully",
+        data: updatedBanner,
       },
       { status: 200 },
     );
