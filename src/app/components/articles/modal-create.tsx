@@ -2,10 +2,12 @@ import { useGet, usePost, usePostFile, usePut } from "@/app/lib/fetcher";
 import { useArticleStore } from "@/app/stores/article";
 import { Article } from "@/app/types/article";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { getLocalTimeZone, now } from "@internationalized/date";
 import {
   Autocomplete,
   AutocompleteItem,
   Button,
+  DatePicker,
   Input,
   Modal,
   ModalBody,
@@ -21,6 +23,7 @@ import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import ThumbnailDropzone from "../thumbnail-dropzone";
+import { omit } from "lodash";
 
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
@@ -74,25 +77,27 @@ const ModalCreate: React.FC<ModalCreateProps> = ({ isOpen, onOpenChange }) => {
 
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  const [slug, setSlug] = useState<string>("");
   const [filePath, setFilePath] = useState<string | null>(null);
 
   const {
-    register,
     handleSubmit,
     control,
     reset,
     formState: { errors },
     setValue,
+    watch,
   } = useForm<{
     title: string;
     slug: string;
     content: string;
     status: string;
     categoryId: string;
+    publishedAt: any;
   }>({
     resolver: zodResolver(postSchema),
   });
+
+  const status = watch("status");
 
   const handleFileAccepted = (file: File) => {
     setFile(file);
@@ -109,12 +114,12 @@ const ModalCreate: React.FC<ModalCreateProps> = ({ isOpen, onOpenChange }) => {
     content: string;
     status: string;
     categoryId: string;
+    publishedAt: any;
   }) => {
     if (!file && !selectedArticle?.id) {
       toast.error("Please upload a file", { duration: 5000 });
       return;
     }
-
     try {
       let uploadResponse = null;
       if (file) {
@@ -126,7 +131,6 @@ const ModalCreate: React.FC<ModalCreateProps> = ({ isOpen, onOpenChange }) => {
         }
         setFilePath(uploadResponse.filePath);
       }
-
       const postData = {
         ...data,
         thumbnailUrl: uploadResponse?.filePath || selectedArticle?.thumbnailUrl,
@@ -135,9 +139,18 @@ const ModalCreate: React.FC<ModalCreateProps> = ({ isOpen, onOpenChange }) => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
+
       if (selectedArticle?.id) {
         const updateResponse = await updatePostMutation.mutateAsync({
-          ...postData,
+          ...(postData.status === 1
+            ? {
+                ...postData,
+                publishedAt: new Date().toISOString(),
+              }
+            : {
+                ...omit(postData, ["publishedAt"]),
+                publishedAt: selectedArticle?.publishedAt,
+              }),
           id: selectedArticle.id,
         });
         if (!updateResponse?.success) {
@@ -146,7 +159,16 @@ const ModalCreate: React.FC<ModalCreateProps> = ({ isOpen, onOpenChange }) => {
         }
         toast.success(updateResponse?.message);
       } else {
-        const postResponse = await createPostMutation.mutateAsync(postData);
+        const postResponse = await createPostMutation.mutateAsync(
+          postData?.status === 1
+            ? {
+                ...postData,
+                publishedAt: new Date(
+                  watch("publishedAt").toDate("yyyy-MM-dd HH:mm:ss"),
+                ),
+              }
+            : postData,
+        );
         if (!postResponse?.success) {
           toast.error(postResponse?.message, { duration: 5000 });
           await deleteFileMutation.mutateAsync({
@@ -160,7 +182,6 @@ const ModalCreate: React.FC<ModalCreateProps> = ({ isOpen, onOpenChange }) => {
       if (filePath) {
         await deleteFileMutation.mutateAsync({ filePath });
       }
-
       toast.error("Failed to create post", { duration: 5000 });
     } finally {
       await queryClient.invalidateQueries({
@@ -184,14 +205,12 @@ const ModalCreate: React.FC<ModalCreateProps> = ({ isOpen, onOpenChange }) => {
       setValue("content", selectedArticle.content);
       setValue("status", (selectedArticle.status || 0).toString());
       setValue("categoryId", selectedArticle.categoryId);
-      setSlug(selectedArticle.slug);
       setPreview(selectedArticle.thumbnailUrl || null);
     }
 
     if (!isOpen) {
       setFile(null);
       setPreview(null);
-      setSlug("");
       reset();
     }
   }, [isOpen, selectedArticle]);
@@ -242,24 +261,38 @@ const ModalCreate: React.FC<ModalCreateProps> = ({ isOpen, onOpenChange }) => {
                     <Input
                       label="Title"
                       {...field}
+                      onChange={(e) => {
+                        field.onChange(e.target.value);
+                        setValue(
+                          "slug",
+                          e.target.value.replace(/\s+/g, "-").toLowerCase(),
+                          {
+                            shouldValidate: true,
+                          },
+                        );
+                      }}
                       isInvalid={!!errors.title}
                       errorMessage={errors.title?.message?.toString() || ""}
                     />
                   )}
                 />
-                <Input
-                  label="Slug"
-                  {...register("slug")}
-                  value={slug}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setSlug(value.replace(/\s+/g, "-").toLowerCase());
-                    setValue("slug", value.replace(/\s+/g, "-").toLowerCase(), {
-                      shouldValidate: true,
-                    });
-                  }}
-                  isInvalid={!!errors.slug}
-                  errorMessage={errors.slug?.message?.toString() || ""}
+                <Controller
+                  name="slug"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      label="Slug"
+                      {...field}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        field.onChange(
+                          value.replace(/\s+/g, "-").toLowerCase(),
+                        );
+                      }}
+                      isInvalid={!!errors.slug}
+                      errorMessage={errors.slug?.message?.toString() || ""}
+                    />
+                  )}
                 />
               </div>
 
@@ -325,7 +358,12 @@ const ModalCreate: React.FC<ModalCreateProps> = ({ isOpen, onOpenChange }) => {
                     className="mt-11"
                     isLoading={false}
                     selectedKey={field.value}
-                    onSelectionChange={field.onChange}
+                    onSelectionChange={(value) => {
+                      setValue("publishedAt", now(getLocalTimeZone()), {
+                        shouldTouch: true,
+                      });
+                      field.onChange(value);
+                    }}
                     placeholder="Select a status"
                     defaultItems={[
                       {
@@ -348,6 +386,28 @@ const ModalCreate: React.FC<ModalCreateProps> = ({ isOpen, onOpenChange }) => {
                   </Autocomplete>
                 )}
               />
+
+              {status === "1" && (
+                <Controller
+                  name="publishedAt"
+                  control={control}
+                  render={({ field }) => (
+                    <DatePicker
+                      label="Published Date"
+                      {...field}
+                      value={field.value}
+                      onChange={(value) => {
+                        field.onChange(value);
+                      }}
+                      hideTimeZone
+                      showMonthAndYearPickers
+                      isInvalid={!!errors.publishedAt}
+                      errorMessage={errors.publishedAt?.message?.toString()}
+                      defaultValue={now(getLocalTimeZone())}
+                    />
+                  )}
+                />
+              )}
             </div>
           </form>
         </ModalBody>

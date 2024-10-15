@@ -1,4 +1,4 @@
-import { useDelete, usePost } from "@/app/lib/fetcher"; // Use your delete function
+import { useDelete, usePost } from "@/app/lib/fetcher";
 import { useArticleStore } from "@/app/stores/article";
 import { useModalAction } from "@/app/stores/modal";
 import { Article } from "@/app/types/article";
@@ -12,7 +12,7 @@ import {
   DropdownMenu,
   DropdownTrigger,
 } from "@nextui-org/react";
-import { useMutation, useQueryClient } from "@tanstack/react-query"; // Import React Query hooks
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import parse from "html-react-parser";
 import React from "react";
@@ -54,14 +54,12 @@ const RenderCell: React.FC<ExtendedRenderCellProps> = ({ item, columnKey }) => {
   });
 
   const handleDelete = async (articleId: string, thumbnailUrl: string) => {
-    // Using toast.promise for the delete operation
     toast.promise(
       (async () => {
-        // Delete the file first
         if (thumbnailUrl) {
           await deleteFileMutation.mutateAsync({ filePath: thumbnailUrl });
         }
-        // Then delete the article
+
         await deleteArticleMutation.mutateAsync(articleId);
       })(),
       {
@@ -80,7 +78,6 @@ const RenderCell: React.FC<ExtendedRenderCellProps> = ({ item, columnKey }) => {
 
     case "createdAt":
     case "updatedAt":
-    case "publishedAt":
       return (
         <div>
           {format(
@@ -89,10 +86,22 @@ const RenderCell: React.FC<ExtendedRenderCellProps> = ({ item, columnKey }) => {
           )}
         </div>
       );
+    case "publishedAt":
+      return (
+        <div>
+          {item.status === 1 &&
+            format(
+              new Date(cellValue as string | number),
+              "MMM dd, yyyy HH:mm:ss",
+            )}
+        </div>
+      );
 
     case "content":
       const contentPreview =
-        typeof cellValue === "string" ? parse(cellValue.slice(0, 25)) : ""; // Preview 25 characters of content
+        typeof cellValue === "string"
+          ? parse(`${cellValue.slice(0, 25)}...`)
+          : "";
       return <div>{contentPreview}</div>;
 
     case "status":
@@ -144,7 +153,6 @@ const RenderCell: React.FC<ExtendedRenderCellProps> = ({ item, columnKey }) => {
       );
 
     default:
-      // Return primitive types wrapped in a div to make them ReactNode-compatible
       return <div>{cellValue as React.ReactNode}</div>;
   }
 };

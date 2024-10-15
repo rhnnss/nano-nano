@@ -13,8 +13,8 @@ export interface Article {
   thumbnailUrl: string;
   status: number;
   categoryId: string;
-  category?: Category; // Related category object
-  publishedAt?: string;
+  category?: Category;
+  publishedAt?: any;
   createdAt?: string;
   updatedAt?: string;
 }

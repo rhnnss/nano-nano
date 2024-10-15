@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
     // Parse formData from the incoming request
     const data = await request.formData();
     const file = data.get("file") as unknown as File | null;
+    const path = data.get("path") as string | null;
 
     // Check if file was provided
     if (!file) {
@@ -57,7 +58,11 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes);
 
     // Define the path to save the file, e.g., inside 'public/uploads/articles'
-    const filePath = join(process.cwd(), "public/uploads/articles", fileName);
+    const filePath = join(
+      process.cwd(),
+      `public/uploads/${path || "articles"}`,
+      fileName,
+    );
 
     // Write the file to the destination folder
     await writeFile(filePath, new Uint8Array(buffer));
@@ -68,7 +73,7 @@ export async function POST(request: NextRequest) {
         success: true,
         status: 200,
         message: "File uploaded successfully",
-        filePath: `/uploads/articles/${fileName}`,
+        filePath: `/uploads/${path || "articles"}/${fileName}`,
       },
       { status: 200 },
     );

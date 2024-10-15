@@ -18,7 +18,7 @@ model Category {
 model Posts {
   id           String   @id @default(uuid())
   title        String   @unique
-  content      String?   @db.LongText
+  content      String?  @db.LongText
   slug         String   @unique
   thumbnailUrl String?
   status       Int
@@ -26,7 +26,7 @@ model Posts {
   publishedAt  DateTime @default(now()) @db.DateTime(0)
   createdAt    DateTime @default(now()) @db.DateTime(0)
   updatedAt    DateTime @default(now()) @updatedAt @db.DateTime(0)
-  category     Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  category     Category @relation(fields: [categoryId], references: [id])
 
   @@index([categoryId], map: "Posts_categoryId_fkey")
 }
@@ -37,6 +37,7 @@ model Product {
   description String
   imageUrl    String
   buyLink     String
+  isActive    Int      @db.TinyInt
   createdAt   DateTime @default(now()) @db.DateTime(0)
   updatedAt   DateTime @default(now()) @updatedAt @db.DateTime(0)
 }
