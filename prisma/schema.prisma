@@ -48,7 +48,7 @@ model Banner {
   description  String
   imageUrl     String
   ctaUrl       String
-  displayOrder Int
+  displayOrder Int?
   isActive     Int      @default(0) @db.TinyInt
   createdAt    DateTime @default(now()) @db.DateTime(0)
   updatedAt    DateTime @default(now()) @updatedAt @db.DateTime(0)
